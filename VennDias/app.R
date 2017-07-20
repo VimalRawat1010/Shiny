@@ -88,8 +88,8 @@ server <- shinyServer(function(input, output) {
   
   
   
-  output$downloadPlot <- downloadHandler(filename =function(){ paste(input$filename, '.svg', sep='')},
-                                         content=function(filename) {ggsave(filename, plotInput(), device = svg)}
+  output$downloadPlot <- downloadHandler(filename =function(){ paste(input$filename, '.png', sep='')},
+                                         content=function(filename) {ggsave(filename, plotInput())}
   )
   
   output$vennDiag <-renderPlot({
