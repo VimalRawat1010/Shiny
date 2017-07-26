@@ -9,6 +9,8 @@
 
 library(shiny)
 library(VennDiagram)
+library(ggplot2)
+library(futile.logger)
 
 # Define UI for application that draws a histogram
 ui <- shinyUI(fluidPage(
@@ -89,7 +91,7 @@ server <- shinyServer(function(input, output) {
   
   
   output$downloadPlot <- downloadHandler(filename =function(){ paste(input$filename, '.png', sep='')},
-                                         content=function(filename) {ggsave(filename, plotInput())}
+                                         content=function(filename) {ggsave(filename, plotInput(),device="png")}
   )
   
   output$vennDiag <-renderPlot({
