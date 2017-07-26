@@ -10,212 +10,191 @@
 library(shiny)
 library(VennDiagram)
 library(ggplot2)
-library(futile.logger)
-
+library(gplots)
+#library(beeswarm)
 # Define UI for application that draws a histogram
-ui <- shinyUI(fluidPage(
-   
-   # Application title
-   titlePanel("Venn Diagrams"),
-   
-   # Sidebar with a slider input for number of bins 
-   sidebarLayout(
-      sidebarPanel(
-                    fileInput(inputId = "f1",label = "Upload file with unique items",accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
-                    fileInput(inputId = "f2",label = "Upload file with unique items",accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
-                    fileInput(inputId = "f3",label = "Upload file with unique items",accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
-                    fileInput(inputId = "f4",label = "Upload file with unique items",accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
-                    fileInput(inputId = "f5",label = "Upload file with unique items",accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
-                    downloadButton("downloadPlot", "Download Plot")
-      ),  
-      # Show a plot of the generated distribution
-      mainPanel(
-        plotOutput("vennDiag"),uiOutput("tb") 
-      )
-   )
-))
+ui <- navbarPage(
+                    HTML(paste0(textOutput("Vimal Rawat")),paste0("<b> <a href=", shQuote("https://scholar.google.ch/citations?user=NNotcvEAAAAJ&hl=en"), ">", "About Me", "</a> </b>")),
+                    windowTitle = "BasicStat",
+                    inverse = TRUE,
+                    tabPanel("FAQ"),
+                    titlePanel("Basic Stats Operations"),
+                    sidebarPanel(h3("Input data here"),
+                                textAreaInput(inputId="TxA1", "Set1: Paste unique items here",rows=3, width='90%', resize = "both", value=""),
+                                fileInput(inputId = "f1",label = "or Upload file1",accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
+                                textAreaInput(inputId="TxA2", "Set2: Paste unique items here",rows=3, width='90%', resize = "both", value=""),
+                                fileInput(inputId = "f2",label = "or Upload file2",accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
+                                textAreaInput(inputId="TxA3", "Set3: Paste unique items here",rows=3, width='90%', resize = "both", value=""),
+                                fileInput(inputId = "f3",label = "or Upload file3",accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
+                                textAreaInput(inputId="TxA4", "Set4: Paste unique items here",rows=3, width='90%', resize = "both", value=""),
+                                fileInput(inputId = "f4",label = "or Upload file4",accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
+                                textAreaInput(inputId="TxA5", "Set5: Paste unique items here",rows=3, width='90%', resize = "both", value=""),
+                                fileInput(inputId = "f5",label = "or Upload file5",accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
+                                downloadButton("downloadPlot", "Download Plot")
+                                ),  
+                    # Show a plot of the generated distribution
+                    mainPanel(
+                                h2(textOutput("Main Area")),
+                               verbatimTextOutput("TxA1"),verbatimTextOutput("TxA2"),verbatimTextOutput("TxA3"),verbatimTextOutput("TxA4"),verbatimTextOutput("TxA5")
+                                , tabsetPanel(tabPanel("Venneuler diag", 
+                                                       sliderInput("alpha","Transparency", min=0, max=1, value=0.5),
+                                                       sliderInput("ltype","Line type", min=1, max=5, value=1),
+                                                       sliderInput("lwidth","Line width", min=0.01, max=30, value=1),
+                                                       plotOutput("vennDiag"))
+                                             ,tabPanel("Box plot", 
+                                                       sliderInput("lwd1","Transparency", min=0, max=1, value=0.5),
+                                                       plotOutput("boxPlot"))
+                                             ,tabPanel("beeswarm plot", 
+                                                       sliderInput("pch2","Style", min=1, max=20, value=16),
+                                                       sliderInput("cex2","Size", min=0.1, max=5, value=2.5),
+                                                        plotOutput("beeswarmPlot")
+                                                      )
+                                             ,tabPanel("stripchart", 
+                                                       sliderInput("lwd3","Transparency", min=0, max=1, value=0.5),
+                                                       plotOutput("stripchart")
+                                             )
+                                             )
+        
+                                )
+                )
+
 
 # Define server logic required to draw a histogram
-server <- shinyServer(function(input, output) {
+server <- shinyServer(function(input, output,session) {
    
-  data1 <- reactive({
-    file1 <-input$f1
-    if(is.null(file1)){return()}
-    read.table(file=file1$datapath,header = FALSE)
+   
+   
+     
+    fileText1 <- eventReactive(input$f1, {
+    filePath  <- input$f1$datapath
+    fileText  <- paste(readLines(filePath), collapse = "\n")
+    list1 <- fileText
+    # update text area with file content
+    updateTextAreaInput(session, "TxA1", value = fileText)
   })
   
-  data2 <- reactive({
-    file2 <-input$f2
-    if(is.null(file2)){return()}
-    read.table(file=file2$datapath,header = FALSE)
-  })
-  
-  data3 <- reactive({
-    file3 <-input$f3
-    if(is.null(file3)){return()}
-    read.table(file=file3$datapath,header = FALSE)
-  })
-  
-  data4 <- reactive({
-    file4 <-input$f4
-    if(is.null(file4)){return()}
-    read.table(file=file4$datapath,header = FALSE)
-  })
-  data5 <- reactive({
-    file5 <-input$f5
-    if(is.null(file5)){return()}
-    read.table(file=file5$datapath,header = FALSE)
-  })
-  
-  output$table1 <-renderTable({
-    if(is.null(data1())){return()}
-    data1()
-  })
-  output$table2 <-renderTable({
-    if(is.null(data2())){return()}
-    data2()
-  })
-  output$table3 <-renderTable({
-    if(is.null(data3())){return()}
-    data3()
-  })
-  output$table4 <-renderTable({
-    if(is.null(data4())){return()}
-    data4()
-  })
-  output$table5 <-renderTable({
-    if(is.null(data5())){return()}
-    data5()
-  })
-  
-  
-  
-  output$downloadPlot <- downloadHandler(filename =function(){ paste(input$filename, '.png', sep='')},
-                                         content=function(filename) {ggsave(filename, plotInput(),device="png")}
-  )
-  
-  output$vennDiag <-renderPlot({
-       print(plotInput())
-  })
-  
-  
-  plotInput <- reactive({
-      l1 <- data1()
-      l2 <- data2()
-      l3 <- data3()
-      l4 <- data4()
-      l5 <- data5()
-      a1 <- nrow(l1)
-      a2 <- nrow(l2)
-      a3 <- nrow(l3)
-      a4 <- nrow(l4)
-      a5 <- nrow(l5)
-      a12 = length(intersect(l1$V1,l2$V1))
-      a13 = length(intersect(l1$V1,l3$V1))
-      a14 = length(intersect(l1$V1,l4$V1))
-      a15 = length(intersect(l1$V1,l5$V1))
-      a23 = length(intersect(l2$V1,l3$V1))
-      a24 = length(intersect(l2$V1,l4$V1))
-      a25 = length(intersect(l2$V1,l5$V1))
-      a34 = length(intersect(l3$V1,l4$V1))
-      a35 = length(intersect(l3$V1,l5$V1))
-      a45 = length(intersect(l4$V1,l5$V1))
-      a123 = length(intersect(intersect(l1$V1,l2$V1), l3$V1))
-      a124 = length(intersect(intersect(l1$V1,l2$V1), l4$V1))
-      a125 = length(intersect(intersect(l1$V1,l2$V1), l5$V1))
-      a134 = length(intersect(intersect(l1$V1,l3$V1), l4$V1))
-      a135 = length(intersect(intersect(l1$V1,l3$V1), l5$V1))
-      a145 = length(intersect(intersect(l1$V1,l4$V1), l5$V1))
-      a234 = length(intersect(intersect(l2$V1,l3$V1), l5$V1))
-      a235 = length(intersect(intersect(l2$V1,l3$V1), l5$V1))
-      a245 = length(intersect(intersect(l2$V1,l4$V1), l5$V1))
-      a345 = length(intersect(intersect(l3$V1,l4$V1), l5$V1))
-      a1234 = length(intersect(intersect(intersect(l1$V1,l2$V1),l3$V1),l4$V1))
-      a1235 = length(intersect(intersect(intersect(l1$V1,l2$V1),l3$V1),l5$V1))
-      a1245 = length(intersect(intersect(intersect(l1$V1,l2$V1),l4$V1),l5$V1))
-      a1345 = length(intersect(intersect(intersect(l1$V1,l3$V1),l4$V1),l5$V1))
-      a2345 = length(intersect(intersect(intersect(l2$V1,l3$V1),l4$V1),l5$V1))
-      a12345 = length(intersect(intersect(intersect(intersect(l1$V1,l2$V1),l3$V1),l4$V1),l5$V1))
+      fileText2  <- eventReactive(input$f2, {
+      filePath <- input$f2$datapath
+      fileText <- paste(readLines(filePath), collapse = "\n")
+      # update text area with file content
+      list2 <- fileText
+      updateTextAreaInput(session, "TxA2", value = fileText)
+    })
+      fileText3 <- eventReactive(input$f3, {
+      filePath <- input$f3$datapath
+      fileText <- paste(readLines(filePath), collapse = "\n")
+      # update text area with file content
+      list3 <- fileText
+      updateTextAreaInput(session, "TxA3", value = fileText)
+    })
+      fileText4 <- eventReactive(input$f4, {
+      filePath <- input$f4$datapath
+      fileText <- paste(readLines(filePath), collapse = "\n")
+      list4 <- fileText
+      # update text area with file content
+      updateTextAreaInput(session, "TxA4", value = fileText)
+    })
+      fileText5 <- eventReactive(input$f5, {
+      filePath <- input$f5$datapath
+      fileText <- paste(readLines(filePath), collapse = "\n")
+      list5 <- fileText
+      # update text area with file content
+      updateTextAreaInput(session, "TxA5", value = fileText)
+    })
     
-      if(is.null(data3())){
-        
-        venn.plot <- draw.pairwise.venn(
-          area1 = a1,
-          area2 = a2,
-          cross.area = a12,
-          category = c("First","Second"),
-          fill = c("dodgerblue", "goldenrod1")
-        )
-        
-      }
-      
-      
-      if((is.null(data5())  && (!is.null(data3())))){
-        
-        venn.plot <- draw.triple.venn(
-          area1 = a1,
-          area2 = a2,
-          area3 = a3,
-          n12 = a12,
-          n13 = a13,
-          n23 = a23,
-          n123 = a123,
-          category = c("A","B","C"),
-          fill = c("dodgerblue", "goldenrod1", "darkorange1")
-        )
-        
-      }
-      
-      
-      if(!is.null(data5())){
-        
-      venn.plot <- draw.quintuple.venn(
-      area1 = a1,
-      area2 = a2,
-      area3 = a3,
-      area4 = a4,
-      area5 = a5,
-      n12 = a12,
-      n13 = a13,
-      n14 = a14,
-      n15 = a15,
-      n23 = a23,
-      n24 = a24,
-      n25 = a25,
-      n34 = a34,
-      n35 = a35,
-      n45 = a45,
-      n123 = a123,
-      n124 = a124,
-      n125 = a125,
-      n134 = a134,
-      n135 = a135,
-      n145 = a145,
-      n234 = a234,
-      n235 = a235,
-      n245 = a245,
-      n345 = a345,
-      n1234 = a1234,
-      n1235 = a1235,
-      n1245 = a1245,
-      n1345 = a1345,
-      n2345 = a2345,
-      n12345 = a12345,
-      category = c("A", "B", "C", "D", "E"),
-      fill = c("dodgerblue", "goldenrod1", "darkorange1", "seagreen3", "orchid3"),
-      cat.col = c("dodgerblue", "goldenrod1", "darkorange1", "seagreen3", "orchid3"),
-      cat.cex = 2,
-      margin = 0.05,
-      cex = c(1.5, 1.5, 1.5, 1.5, 1.5, 1, 0.8, 1, 0.8, 1, 0.8, 1, 0.8, 1, 0.8, 
-              1, 0.55, 1, 0.55, 1, 0.55, 1, 0.55, 1, 0.55, 1, 1, 1, 1, 1, 1.5),
-      ind = TRUE
-    )
-  } 
+
+    output$TxA1 <- renderPrint({ fileText1() })    
+    output$TxA2 <- renderPrint({ fileText2() }) 
+    output$TxA3 <- renderPrint({ fileText3() }) 
+    output$TxA4 <- renderPrint({ fileText4() }) 
+    output$TxA5 <- renderPrint({ fileText5() }) 
+  
+
+
+  #output$downloadPlot <- downloadHandler(filename =function(){ paste(input$filename, '.png', sep='')},content=function(filename) {ggsave(filename, plotInput2(),device = "png")})
+
+  output$vennDiag <-renderPlot({
+       print(plotInput2())
   })
+  
+  output$boxPlot <-renderPlot({
+    print(boxPlotInput())
+  })
+  
+  output$beeswarmPlot <-renderPlot({
+    print(beeswarmInput())
+  })
+  
+  
+  beeswarmInput <- reactive({
+    list1=strtoi(unlist(strsplit(input$TxA1,split = '\n' )))
+    list2=strtoi(unlist(strsplit(input$TxA2,split = '\n' )))
+    list3=strtoi(unlist(strsplit(input$TxA3,split = '\n' )))
+    list4=strtoi(unlist(strsplit(input$TxA4,split = '\n' )))
+    list5=strtoi(unlist(strsplit(input$TxA5,split = '\n' )))
+
+    if((input$TxA2 != "") & (input$TxA3 == "")){
+      beeswarm(list(list1,list2),col = 2:3, pch = input$pch2, cex=input$cex2)
+    }
+    if((input$TxA3 != "") & (input$TxA4 == "")){
+      beeswarm(list(list1,list2,list3),col = 2:4, pch = input$pch2, cex=input$cex2)
+    }
+    if((input$TxA4 != "") & (input$TxA5 == "")){
+      beeswarm(list(list1,list2,list3,list4),col = 2:5, pch = input$pch2, cex=input$cex2)
+    }
+    if(input$TxA5 != "" & input$TxA4 != "" & input$TxA3 != "" & input$TxA2 != "" & input$TxA1 != ""){
+      beeswarm(list(list1,list2,list3,list4,list5),col = 2:6, pch = input$pch2, cex=input$cex2)
+    }
+  })
+  
+  
+  
+  boxPlotInput <- reactive({
+    list1=strtoi(unlist(strsplit(input$TxA1,split = '\n' )))
+    list2=strtoi(unlist(strsplit(input$TxA2,split = '\n' )))
+    list3=strtoi(unlist(strsplit(input$TxA3,split = '\n' )))
+    list4=strtoi(unlist(strsplit(input$TxA4,split = '\n' )))
+    list5=strtoi(unlist(strsplit(input$TxA5,split = '\n' )))
+
+    if((input$TxA2 != "") & (input$TxA3 == "")){
+      boxplot(list1,list2)
+    }
+    if((input$TxA3 != "") & (input$TxA4 == "")){
+      boxplot(list1,list2,list3)
+    }
+    if((input$TxA4 != "") & (input$TxA5 == "")){
+      boxplot(list1,list2,list3,list4)
+    }
+    if(input$TxA5 != "" & input$TxA4 != "" & input$TxA3 != "" & input$TxA2 != "" & input$TxA1 != ""){
+      boxplot(list1,list2,list3,list4,list5)
+    }
+  })
+  
+  
+  plotInput2 <- reactive({
+    list1=unlist(strsplit(input$TxA1,split = '\n' ))
+    list2=unlist(strsplit(input$TxA2,split = '\n' ))
+    list3=unlist(strsplit(input$TxA3,split = '\n' ))
+    list4=unlist(strsplit(input$TxA4,split = '\n' ))
+    list5=unlist(strsplit(input$TxA5,split = '\n' ))
+     if((input$TxA2 != "") & (input$TxA3 == "")){
+       grid.draw(venn.diagram(list(GrpA=list1,GrpB=list2),fill= 2:3,filename=NULL,alpha=input$alpha, lty=input$ltype, lwd=input$lwidth ))
+     }
+    if((input$TxA3 != "") & (input$TxA4 == "")){
+      grid.draw(venn.diagram(list(GrpA=list1,GrpB=list2,GrpC=list3),fill= 2:4,filename=NULL,alpha=input$alpha, lty=input$ltype, lwd=input$lwidth))
+    }
+    if((input$TxA4 != "") & (input$TxA5 == "")){
+      grid.draw(venn.diagram(list(GrpA=list1,GrpB=list2,GrpC=list3,GrpD=list4),fill= 2:5,filename=NULL,alpha=input$alpha, lty=input$ltype, lwd=input$lwidth))
+    }
+    if(input$TxA5 != "" & input$TxA4 != "" & input$TxA3 != "" & input$TxA2 != "" & input$TxA1 != ""){
+      grid.draw(venn.diagram(list(GrpA=list1,GrpB=list2,GrpC=list3,GrpD=list4,GrpE=list5),fill= 2:6,filename=NULL,alpha=input$alpha, lty=input$ltype, lwd=input$lwidth))
+    }
+  })
+  
   
   output$tb <-renderUI({
 
-      tabsetPanel(tabPanel("File1", tableOutput("table1")),tabPanel("File2", tableOutput("table2")),tabPanel("File3", tableOutput("table3")),tabPanel("File4", tableOutput("table4")),tabPanel("File5", tableOutput("table5")),tabPanel("VennDiag", tableOutput("vennDiag")))
+      tabsetPanel(tabPanel("File1", tableOutput("table1")),tabPanel("BoxPlot", plotOutput("boxPlot")),tabPanel("File3", tableOutput("table3")),tabPanel("File4", tableOutput("table4")),tabPanel("File5", tableOutput("table5")),tabPanel("VennDiag", tableOutput("vennDiag")))
     
     
   })
