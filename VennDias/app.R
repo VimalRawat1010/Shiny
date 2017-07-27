@@ -14,46 +14,64 @@ library(gplots)
 #library(beeswarm)
 # Define UI for application that draws a histogram
 ui <- navbarPage(
-                    HTML(paste0(textOutput("Vimal Rawat")),paste0("<b> <a href=", shQuote("https://scholar.google.ch/citations?user=NNotcvEAAAAJ&hl=en"), ">", "About Me", "</a> </b>")),
+                    HTML(paste0(textOutput("Vimal Rawat")),paste0("<b> <h3> <a href=", shQuote("https://scholar.google.ch/citations?user=NNotcvEAAAAJ&hl=en"), ">", "About Me", "</a> </h2></b>")),
                     windowTitle = "BasicStat",
                     inverse = TRUE,
-                    tabPanel("FAQ"),
-                    titlePanel("Basic Stats Operations"),
-                    sidebarPanel(h3("Input data here"),
-                                textAreaInput(inputId="TxA1", "Set1: Paste unique items here",rows=3, width='90%', resize = "both", value=""),
-                                fileInput(inputId = "f1",label = "or Upload file1",accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
-                                textAreaInput(inputId="TxA2", "Set2: Paste unique items here",rows=3, width='90%', resize = "both", value=""),
-                                fileInput(inputId = "f2",label = "or Upload file2",accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
-                                textAreaInput(inputId="TxA3", "Set3: Paste unique items here",rows=3, width='90%', resize = "both", value=""),
-                                fileInput(inputId = "f3",label = "or Upload file3",accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
-                                textAreaInput(inputId="TxA4", "Set4: Paste unique items here",rows=3, width='90%', resize = "both", value=""),
-                                fileInput(inputId = "f4",label = "or Upload file4",accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
-                                textAreaInput(inputId="TxA5", "Set5: Paste unique items here",rows=3, width='90%', resize = "both", value=""),
-                                fileInput(inputId = "f5",label = "or Upload file5",accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
-                                downloadButton("downloadPlot", "Download Plot")
+                    tabPanel(h3("FAQ")), tabPanel(h3("FAQ")),tabPanel(h3("FAQ")),
+                    titlePanel("Basic Stats Plotting"),
+                    sidebarPanel(h3("Define plot setting here"),
+                                 sliderInput("alpha","Transparency", min=0, max=1, value=0.5),
+                                 sliderInput("lty","Line type", min=1, max=5, value=1),
+                                 sliderInput("lwd","Line width", min=0.01, max=30, value=5),
+                                 sliderInput("cex","Label size", min=0.1, max=20, value=2),
+                                 downloadButton("downloadPlot", "Download Plot"), width = 3
                                 ),  
                     # Show a plot of the generated distribution
                     mainPanel(
                                 h2(textOutput("Main Area")),
                                verbatimTextOutput("TxA1"),verbatimTextOutput("TxA2"),verbatimTextOutput("TxA3"),verbatimTextOutput("TxA4"),verbatimTextOutput("TxA5")
-                                , tabsetPanel(tabPanel("Venneuler diag", 
-                                                       sliderInput("alpha","Transparency", min=0, max=1, value=0.5),
-                                                       sliderInput("ltype","Line type", min=1, max=5, value=1),
-                                                       sliderInput("lwidth","Line width", min=0.01, max=30, value=1),
-                                                       plotOutput("vennDiag"))
-                                             ,tabPanel("Box plot", 
-                                                       sliderInput("lwd1","Transparency", min=0, max=1, value=0.5),
-                                                       plotOutput("boxPlot"))
-                                             ,tabPanel("beeswarm plot", 
-                                                       sliderInput("pch2","Style", min=1, max=20, value=16),
-                                                       sliderInput("cex2","Size", min=0.1, max=5, value=2.5),
-                                                        plotOutput("beeswarmPlot")
+                                , tabsetPanel(tabPanel(h3("Venneuler diag"), 
+                                    fluidRow(
+                                              h2("Enter your data here: (Number or Text)"),
+                                              column(2,
+                                                       textAreaInput(inputId="TxA1", "Set1: Paste unique items here",rows=3, width='90%', resize = "both", value=""),
+                                                       fileInput(inputId = "f1",label = "or Upload file1",accept = c("text/csv","text/comma-separated-values,text/plain",".csv"))
+                                                       ),
+                                              column(2,
+                                                      textAreaInput(inputId="TxA2", "Set2: Paste unique items here",rows=3, width='90%', resize = "both", value=""),
+                                                       fileInput(inputId = "f2",label = "or Upload file2",accept = c("text/csv","text/comma-separated-values,text/plain",".csv"))
+                                                     ),
+                                              column(2,
+                                                       textAreaInput(inputId="TxA3", "Set3: Paste unique items here",rows=3, width='90%', resize = "both", value=""),
+                                                       fileInput(inputId = "f3",label = "or Upload file3",accept = c("text/csv","text/comma-separated-values,text/plain",".csv"))
+                                                     ),
+                                              column(2,      
+                                                       textAreaInput(inputId="TxA4", "Set4: Paste unique items here",rows=3, width='90%', resize = "both", value=""),
+                                                       fileInput(inputId = "f4",label = "or Upload file4",accept = c("text/csv","text/comma-separated-values,text/plain",".csv"))
+                                                    ),
+                                              column(2,         
+                                                       textAreaInput(inputId="TxA5", "Set5: Paste unique items here",rows=3, width='90%', resize = "both", value=""),
+                                                       fileInput(inputId = "f5",label = "or Upload file5",accept = c("text/csv","text/comma-separated-values,text/plain",".csv"))
+                                                     ),
+                                                     
+                                              plotOutput("vennDiag")
+                                         )),
+                                    
+                                             tabPanel(h3("Box plot"), 
+                                                      h2("Enter your data here: (only Numbers)"),
+                                                      textAreaInput(inputId="TxA1", "Set1: Paste unique items here",rows=3, width='90%', resize = "both", value=""),
+                                                      fileInput(inputId = "f1",label = "or Upload file1",accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
+                                                      plotOutput("boxPlot"))
+                                             ,tabPanel(h3("beeswarm plot"), 
+                                                       textAreaInput(inputId="TxA1", "Set1: Paste unique items here",rows=3, width='90%', resize = "both", value=""),
+                                                       fileInput(inputId = "f1",label = "or Upload file1",accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
+                                                       plotOutput("beeswarmPlot")
                                                       )
-                                             ,tabPanel("stripchart", 
-                                                       sliderInput("lwd3","Transparency", min=0, max=1, value=0.5),
-                                                       plotOutput("stripchart")
-                                             )
-                                             )
+                                              ,tabPanel(h3("Stripchart"), 
+                                                        textAreaInput(inputId="TxA1", "Set1: Paste unique items here",rows=3, width='90%', resize = "both", value=""),
+                                                        fileInput(inputId = "f1",label = "or Upload file1",accept = c("text/csv","text/comma-separated-values,text/plain",".csv")),
+                                                        plotOutput("stripchart"))
+                                             ), width = 9
         
                                 )
                 )
@@ -178,16 +196,16 @@ server <- shinyServer(function(input, output,session) {
     list4=unlist(strsplit(input$TxA4,split = '\n' ))
     list5=unlist(strsplit(input$TxA5,split = '\n' ))
      if((input$TxA2 != "") & (input$TxA3 == "")){
-       grid.draw(venn.diagram(list(GrpA=list1,GrpB=list2),fill= 2:3,filename=NULL,alpha=input$alpha, lty=input$ltype, lwd=input$lwidth ))
+       grid.draw(venn.diagram(list(A=list1,B=list2),cex=input$cex,fill= 2:3,filename=NULL,alpha=input$alpha, lty=input$lty, lwd=input$lwd))
      }
     if((input$TxA3 != "") & (input$TxA4 == "")){
-      grid.draw(venn.diagram(list(GrpA=list1,GrpB=list2,GrpC=list3),fill= 2:4,filename=NULL,alpha=input$alpha, lty=input$ltype, lwd=input$lwidth))
+      grid.draw(venn.diagram(list(A=list1,B=list2,C=list3),,cex=input$cex,fill= 2:4,filename=NULL,alpha=input$alpha, lty=input$lty, lwd=input$lwd))
     }
     if((input$TxA4 != "") & (input$TxA5 == "")){
-      grid.draw(venn.diagram(list(GrpA=list1,GrpB=list2,GrpC=list3,GrpD=list4),fill= 2:5,filename=NULL,alpha=input$alpha, lty=input$ltype, lwd=input$lwidth))
+      grid.draw(venn.diagram(list(A=list1,B=list2,C=list3,D=list4),,cex=input$cex,fill= 2:5,filename=NULL,alpha=input$alpha, lty=input$lty, lwd=input$lwd))
     }
     if(input$TxA5 != "" & input$TxA4 != "" & input$TxA3 != "" & input$TxA2 != "" & input$TxA1 != ""){
-      grid.draw(venn.diagram(list(GrpA=list1,GrpB=list2,GrpC=list3,GrpD=list4,GrpE=list5),fill= 2:6,filename=NULL,alpha=input$alpha, lty=input$ltype, lwd=input$lwidth))
+      grid.draw(venn.diagram(list(A=list1,B=list2,C=list3,D=list4,E=list5),cex=input$cex,fill= 2:6,filename=NULL,alpha=input$alpha, lty=input$lty, lwd=input$lwd))
     }
   })
   
