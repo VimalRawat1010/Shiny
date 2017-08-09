@@ -15,96 +15,85 @@ library(gplots)
 
 
 
-  ui <- fluidPage(
-    sidebarLayout(
-      sidebarPanel(
-        fileInput("file", "Upload the file with ATG ids and Gene as header",
-                  accept = c(
-                    "text/csv",
-                    "text/comma-separated-values,text/plain",
-                    ".csv")
-        ),
-        helpText("Deafault file size 5MB"),
-        tags$hr(),
-        checkboxInput("header", "Header", TRUE),
-        radioButtons(inputId = "sep",label =  "Seprator", choices = c(Comma=',', "NewLine" = '\n', Tab ='\t'), selected ='\n'),
-        sliderInput(inputId = "num", label = "K-mean clustering : K=", value = 5, min=2, max=10)
-      ),
-      mainPanel(tableOutput("tb"), plotOutput("distPlot"))
-    )
+ui <- navbarPage(
+                  HTML(paste0(textOutput("Vimal Rawat")),paste0("<b> <h4> <a href=", shQuote("https://scholar.google.ch/citations?user=NNotcvEAAAAJ&hl=en"), ">", "About Me", "</a> </h3></b>")),
+                  windowTitle = "Expression",
+                  inverse = TRUE,
+                  tabPanel(HTML(paste0("<b> <h4> <a href=", shQuote("https://github.com/VimalRawat1010"), ">", "&nbsp;Github", "</a> </h3></b>"))),
+                  tabPanel(HTML(paste0("<h3><b>&nbsp;&nbsp;&nbsp;&nbsp;Arabidopsis Gene Expression Landscape</b><h1>"))),
+                  fluidPage(theme ="bootstrap.css",
+                            # Application title
+                            titlePanel(h2("Make selection"),windowTitle ="Pfam"),
+                            inverse = FALSE,
+                        sidebarLayout(
+                           sidebarPanel(
+                               textAreaInput("TxA1", "Type ATG ids here: ",rows=5, width='100%', resize = "both", value=""),
+                               fileInput("file", "or Upload the file with ATG ids and Gene as header"),
+                               h3(actionButton("enterdata", "Enter", style='font-size:100%'))
+                           
+                                        ),
+                                                   
+                           mainPanel( 
+                                      
+                                    
+                                    tabsetPanel( type="tabs",
+                                                  tabPanel(h4("About web-tool"),
+                                                            HTML("<h4><b>How to use this webtool to plot your data.</b></h4>"),
+                                                            HTML("This section describe how to use this web tool to plot your data.")
+                                                          ),
+                                                  tabPanel(h4("Gene list"),
+                                                           HTML("<h4><b>How to use this webtool to plot your data.</b></h4>"),
+                                                            h5(textOutput("text1")), 
+                                                            h5(tableOutput("data_sets")), 
+                                                            h5(tableOutput("tbl1"))
+                                                            ),
+                                                  tabPanel(h4("Expression profile"),
+                                                            HTML("<h4><b>How to use this webtool to plot your data.</b></h4>")
+                                                            ),
+                                                  tabPanel(h4("Gene structure"),
+                                                            HTML("<h4><b>How to use this webtool to plot your data.</b></h4>")
+                                                           )
+                                                    ),
+                                    
+                                    verbatimTextOutput("TxA1"), tableOutput("tb"), plotOutput("distPlot")
+                                              )
+                                        )
+                              )
 )
-  
+
 # Define server logic required to draw a histogram
-server <- function(input, output) {
-   
+server <- function(input, output,session) {
+
+  
+  fileText1 <- eventReactive(input$file, {
+    filePath  <- input$file$datapath
+    fileText  <- paste(readLines(filePath), collapse = "\n")
+    # update text area with file content
+    updateTextAreaInput(session, "TxA1", value = fileText)
+  })
+  
+  output$TxA1 <- renderPrint({ fileText1() })
+  
+  getTopGenes <- eventReactive(input$enterdata,{
+  output$data_sets  <- renderTable({
+    conn1 <- dbConnect(
+      drv = RMySQL::MySQL(),
+      dbname = "Athal_Expression",
+      host = "localhost",
+      username = "root",
+      password = "abc123")
+    on.exit(dbDisconnect(conn1), add = TRUE)
+    return (dbGetQuery(conn1,"SELECT  *  FROM RNAseq LIMIT 10;"))
+    
+  })
+  
+  })
 
   
   
-       #### Reactive function to return content of uploaded file
-        data <-reactive({
-        file1 <- input$file
-        if (is.null(file1)) {return()}
-        read.table(file= file1$datapath, sep=input$sep, header = input$header)
-        })
-        
-       #### Function to get path of file 
-       output$filedf <- renderTable({
-        if(is.null(data())) {return ()} 
-        input$file
-      }) 
-       
-      
-       output$heatmap <- renderPlot({
-         if(is.null(data())) {return ()} 
-         
-         x <- read.table("../data/TissueSpecific_FPKM.txt", header = T) 
-         geneid <- data()
-         WorkingSet <-subset(x, x$Gene %in% geneid$Gene)
-         row.names(WorkingSet) <- WorkingSet[,1]
-         WorkingSet$Gene <- NULL
-         heatmap.2(data.matrix(WorkingSet), col=redgreen(100), scale="row", trace="none")
-         }, width = 880, height = 880, units = "px", pointsize = 12)
-      
-      
-      output$table <- renderTable({
-      if(is.null(data())) {return ()} 
-      data()
-      })
-      
-      output$pca <- renderPlot({
-        if(is.null(data())) {return ()} 
-        
-        x <- read.table("../data/TissueSpecific_FPKM.txt", header = T) 
-        geneid <- data()
-        WorkingSet <-subset(x, x$Gene %in% geneid$Gene)
-        row.names(WorkingSet) <- WorkingSet[,1]
-        WorkingSet$Gene <- NULL
-        autoplot(prcomp(WorkingSet),label = TRUE,loadings = TRUE, loadings.colour = 'blue',
-                   loadings.label = TRUE, loadings.label.size = 3)
-        }, width = 880, height = 880, units = "px", pointsize = 12
-        )
-      
-      
-      output$clust <- renderPlot({
-        if(is.null(data())) {return ()} 
-        x <- read.table("../data/TissueSpecific_FPKM.txt", header = T) 
-        geneid <- data()
-        WorkingSet <-subset(x, x$Gene %in% geneid$Gene)
-        row.names(WorkingSet) <- WorkingSet[,1]
-        WorkingSet$Gene <- NULL
-        autoplot(kmeans(WorkingSet, input$num),data=WorkingSet,label = TRUE)
-      }, width = 880, height = 880, units = "px", pointsize = 12
-      )
-      
-      
-
-      
-      output$tb <-renderUI({
-        if(is.null(data()))
-        {}
-        else
-          tabsetPanel(tabPanel("About file", tableOutput("filedf")),tabPanel("Data",tableOutput("table")), tabPanel("Heatmap",plotOutput("heatmap")), tabPanel("PCA",plotOutput("pca")), tabPanel("K-mean Clustering",plotOutput("clust")))
-        })
+  output$text1 <- renderText({
+    getTopGenes()
+  })
 
 }
 
