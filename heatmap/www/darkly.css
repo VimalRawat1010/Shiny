@@ -2540,7 +2540,7 @@ select[size] {
 input[type="file"]:focus,
 input[type="radio"]:focus,
 input[type="checkbox"]:focus {
-  outline: 5px auto -webkit-focus-ring-color;
+  outline: 10px auto -webkit-focus-ring-color;
   outline-offset: -2px;
 }
 output {
@@ -2656,19 +2656,19 @@ input[type="search"] {
 .checkbox-inline input[type="checkbox"] {
   position: absolute;
   margin-left: -20px;
-  margin-top: 4px \9;
+  margin-top: 8px \9;
 }
 .radio + .radio,
 .checkbox + .checkbox {
-  margin-top: -5px;
+  margin-top: -px;
 }
 .radio-inline,
 .checkbox-inline {
   position: relative;
   display: inline-block;
   padding-left: 20px;
-  margin-bottom: 0;
-  vertical-align: middle;
+  margin-bottom: 10;
+  vertical-align: left;
   font-weight: normal;
   cursor: pointer;
 }
@@ -7044,4 +7044,3 @@ a.list-group-item-danger.active:focus {
 .panel-default > .panel-heading {
   background-color: #464545;
 }
-

@@ -12,7 +12,8 @@
 library(shiny)
 library(ggfortify)
 library(gplots)
-
+library(DBI)
+library(RMySQL)
 
 
 ui <- navbarPage(
@@ -51,7 +52,9 @@ ui <- navbarPage(
                                                             HTML("<h4><b>How to use this webtool to plot your data.</b></h4>"),
                                                            checkboxInput("Bx_cb_row", "Show dendogram for row", value = TRUE, width = NULL),
                                                            checkboxInput("Bx_cb_col", "Show dendogram for column", value = TRUE, width = NULL),
-
+                                                           radioButtons("Rb_col", "Select Color pallete", c("Red-Green" = "redgreen","Heat" = "heat","Terrain" = "terrain","Topo" = "topo","CM" = "cm"), inline = TRUE),
+                                                           #tags$style(HTML(".radio-inline {margin-right: 80px;}")),
+                                                           h4(uiOutput("tissue")),
                                                            sliderInput("cex1","Row Label size", min=0.1, max=2, value=1),
                                                            sliderInput("cex2","Col Label size", min=0.1, max=2, value=1),
                                                            h5(plotOutput("heatmap"))
@@ -69,6 +72,18 @@ ui <- navbarPage(
 # Define server logic required to draw a histogram
 server <- function(input, output,session) {
 
+      data_sets  <- reactive({
+        #x<-x[-which(x==4)]
+        colnames(getHeatmap())
+      return (colnames(getHeatmap()))
+      })
+      
+  output$tissue <- renderUI({
+    
+    checkboxGroupInput("Tissue", "Tissue", as.list(data_sets()), inline = TRUE)
+  })
+  
+  
   fileText1 <- eventReactive(input$file,{
                               filePath  <- input$file$datapath
                               fileText  <- paste(readLines(filePath), collapse = "\n")
@@ -117,10 +132,14 @@ server <- function(input, output,session) {
 
   output$heatmap <- renderPlot({
                     data <- getHeatmap()
+                    tisuueSelected <- as.symbol(input$tissue)
+                    print(tisuueSelected)
+                    data[,-which(names(data) %in% tisuueSelected)]
                     row.names(data) <- data$Gene
-                    data <- data[,2:22]
-                    heatmap.2(data.matrix(data), trace="none" , cexRow = input$cex1, cexCol = input$cex2, Rowv = input$Bx_cb_row, Colv = input$Bx_cb_col)
-    })
+                    #data <- data[,2:22]
+                    heatmap.2(data.matrix(data), trace="none" , col= cm.colors(265), cexRow = input$cex1, cexCol = input$cex2, Rowv = input$Bx_cb_row, Colv = input$Bx_cb_col)
+                    
+                })
 
 
 
