@@ -40,7 +40,7 @@ ui <- navbarPage(
                             inverse = FALSE,
                         sidebarLayout(
                            sidebarPanel(
-                               textAreaInput("TxA1", "Type ATG ids here: ",rows=5, width='100%', resize = "both", value="AT1G02580\nAT1G02860\nAT1G04330\nAT1G04555\nAT1G06030"),
+                               textAreaInput("TxA1", "Type ATG ids here: ",rows=5, width='100%', resize = "both", value="AT1G10220\nAT1G27280\nAT1G01400\n"),
                                fileInput("file", "or Upload the file with ATG ids"),
                                h3(actionButton("enterdata", "Enter", style='font-size:100%'))
 
@@ -86,16 +86,11 @@ ui <- navbarPage(
 
 
 ######################################################3
-# Load data once
-URL <- "https://raw.githubusercontent.com/christophergandrud/d3Network/master/JSONdata/miserables.json"
-MisJson <- getURL(URL, ssl.verifypeer = FALSE)
 
-# Convert JSON arrays into data frames
-MisLinks <- JSONtoDF(jsonStr = MisJson, array = "links")
-MisNodes <- JSONtoDF(jsonStr = MisJson, array = "nodes")
+MisLinks <- read.table("MisLinks", header=T)
+MisNodes <- read.table("MisNodes", header=T)
 
-# Create individual ID
-MisNodes$ID <- 1:nrow(MisNodes)
+
 
 ######################################################3
 
@@ -186,15 +181,70 @@ server <- function(input, output,session) {
                     heatmap.2(as.matrix(data), trace="none", scale="row",col= input$Rb_col, cexRow = input$cex1, cexCol = input$cex2, Rowv = input$Bx_cb_row, Colv = input$Bx_cb_col)
                 })
 
+ ######################################################################
+  
+  getMisNodes<-reactive({
+          #geneList  <- gsub("\n", ",", input$TxA1)
+          geneList <- as.list(strsplit(input$TxA1, "\n")[[1]])
+          MisNodes <-  MisNodes[MisNodes$name %in% geneList,]
+          
+          MisNodes$ID <- 1:length(MisNodes$ID)
+          return(MisNodes)
+  })
+  
+  
+  ########### Function to get get Link Dataframe
+  f <- function(dataFrame, link.df) {
+          #print(link.df$source)
+          names <- as.vector(dataFrame[,1])
 
+          links <- data.frame(matrix(ncol = 3, nrow = length(names)))
+          colnames(links) <- c("source", "target", "value")
+          for (i in 1:length(names))
+          {
+            for (j in 1:(length(names))){
+              
+             index1 = match(names[j],link.df$source, nomatch = -1 )
+             index2 = match(names[i],link.df$target, nomatch = 0 )
+             if(index1 %in% index2)
+             {
+               
+               links$source <- i
+               links$target <- j
+               links$value <- 1
+               #print(link.df$source)
+             }
+ 
+            }
+          }
+          #print(links)
+          return(links)
+        }
+  
+  
+  
+  getMisLinks<-reactive({
+    nodes <- getMisNodes()
+    B <- f(nodes, MisLinks)
+    return(B)
+  })
+  
+  
   output$networkPlot <- renderPrint({
-    d3ForceNetwork(Nodes = MisNodes, 
-                   Links = MisLinks,  
+    A <- getMisNodes()
+    B <- getMisLinks()
+    print(A)
+    print(B)
+    #print(MisLinks)
+    
+    d3ForceNetwork(Nodes = A,
+                   Links = B,  
                    Source = "source", Target = "target", 
                    Value = "value", NodeID = "name", 
-                   Group = "group", width = 800, height = 800, 
+                   Group = "group", width = 700, height = 700, 
                    opacity = input$slider, standAlone = FALSE,
                    parentElement = '#networkPlot')
+    
   })
   
 
