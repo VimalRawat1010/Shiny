@@ -87,8 +87,8 @@ ui <- navbarPage(
 
 ######################################################3
 
-MisLinks <- read.table("MisLinks", header=T)
-MisNodes <- read.table("MisNodes", header=T)
+MisLinks <- read.table("/home/vimal/Software/Github/Latest/Shiny/heatmap/MisLinks", header=T)
+MisNodes <- read.table("/home/vimal/Software/Github/Latest/Shiny/heatmap/MisNodes", header=T)
 
 
 
@@ -187,7 +187,8 @@ server <- function(input, output,session) {
           #geneList  <- gsub("\n", ",", input$TxA1)
           geneList <- as.list(strsplit(input$TxA1, "\n")[[1]])
           MisNodes <-  MisNodes[MisNodes$name %in% geneList,]
-          
+          #print(class(MisNodes))
+          MisNodes <- MisNodes[order(MisNodes$name),]
           MisNodes$ID <- 1:length(MisNodes$ID)
           return(MisNodes)
   })
@@ -195,29 +196,40 @@ server <- function(input, output,session) {
   
   ########### Function to get get Link Dataframe
   f <- function(dataFrame, link.df) {
-          #print(link.df$source)
+          #print(link.df$target)
           names <- as.vector(dataFrame[,1])
-
-          links <- data.frame(matrix(ncol = 3, nrow = length(names)))
-          colnames(links) <- c("source", "target", "value")
+          n.links = length(names) * 5 
+          links <- data.frame(source = numeric(n.links), target = numeric(n.links), value = numeric(n.links))
+          #colnames(links) <- c("source", "target", "value")
+          count = 0
           for (i in 1:length(names))
           {
-            for (j in 1:(length(names))){
-              
-             index1 = match(names[j],link.df$source, nomatch = -1 )
-             index2 = match(names[i],link.df$target, nomatch = 0 )
-             if(index1 %in% index2)
+            for (j in 1:(length(names)))
+              {
+                index1 = which(link.df$source %in%  names[i])
+                index2 = which(link.df$target %in%  names[j] )
+                machElement = intersect(index1,index2)#index1 <- unlist(index1)
+                index2 <- unlist(index2)
+                
+             if(length(machElement) != 0)
              {
-               
-               links$source <- i
-               links$target <- j
-               links$value <- 1
-               #print(link.df$source)
+               count = count+1
+               #print(machElement)
+               #print(i)
+               #print(j)
+               #print("MATCH")
+               links$source[count] <- i-1
+               links$target[count] <- j-1
+               links$value[count] <- 1
+               index1 <- -1
+               index2 <- -2
+               #print(links)
              }
- 
+            
             }
+   
           }
-          #print(links)
+
           return(links)
         }
   
@@ -233,8 +245,8 @@ server <- function(input, output,session) {
   output$networkPlot <- renderPrint({
     A <- getMisNodes()
     B <- getMisLinks()
-    print(A)
-    print(B)
+    #print(A)
+    #print(B)
     #print(MisLinks)
     
     d3ForceNetwork(Nodes = A,
@@ -243,6 +255,7 @@ server <- function(input, output,session) {
                    Value = "value", NodeID = "name", 
                    Group = "group", width = 700, height = 700, 
                    opacity = input$slider, standAlone = FALSE,
+                   
                    parentElement = '#networkPlot')
     
   })
