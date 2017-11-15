@@ -22,6 +22,9 @@ library(networkD3)
 library(OmicCircos);
 
 
+library(shinydashboard)
+
+
 
 ui <- navbarPage(
                   HTML(paste0(textOutput("Vimal Rawat")),paste0("<b> <h4> <a href=", shQuote("https://scholar.google.ch/citations?user=NNotcvEAAAAJ&hl=en"), ">", "About Me", "</a> </h3></b>")),
